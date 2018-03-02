@@ -1,0 +1,23 @@
+{
+  "name": "cccme",
+  "version": "1.0.0",
+  "description": "A command line interface to generate a mock CCC contest with past contest data.",
+  "main": "cccme.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paarthmadan/cccme.git"
+  },
+  "keywords": [
+    "CLI",
+    "CCC"
+  ],
+  "author": "Paarth Madan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/paarthmadan/cccme/issues"
+  },
+  "homepage": "https://github.com/paarthmadan/cccme#readme"
+}

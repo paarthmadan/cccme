@@ -1,7 +1,7 @@
 module.exports = {
 	checkData: function(args){
 		if(checkProblem(args[2]) == 200 && checkProblem(args[3]) == 200
-			&& parseInt(args[4]) == args[4] && parseInt(args[5]) == args[5]){
+			&& parseInt(args[4]) == args[4] && parseInt(args[5]) == args[5] && args[4] >= 1996 && args[4] >= 1996){
 			return 200;
 		}else{
 			return 404;

@@ -21,14 +21,14 @@ function randomizeProblems (args, callback){
 	var max = ((args[3].charAt(0) == "J") ? 0 : 5) + parseInt(args[3].charAt(1));
 	var min_year = args[4];
 	var max_year = args[5];
-	for (var i = 0; i < size; i++) {
+	for (var i = 0; i < Math.min(size, ((max - min) + 1)); i++) {
 		var problem_random = parseInt(Math.round(Math.random() * (max - min) + min));
 		var year_random = parseInt(Math.round(Math.random() * (max_year - min_year) + min_year));
 		if(problem_sets.indexOf(problem_random) == -1){
 			problem_sets.push(problem_random);
 			years.push(year_random);
 		}else{
-			size++;
+			i--;
 		}
 	}
 	callback(problem_sets, years);

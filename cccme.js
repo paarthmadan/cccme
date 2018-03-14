@@ -11,6 +11,10 @@ const base_url = "http://www.cemc.uwaterloo.ca/contests/computing/2015/stage%201
 var size = 5;
 let pdfParser = new PDFParser();
 
+pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
+pdfParser.on("pdfParser_dataReady", pdfData => {
+    fs.writeFile("./pdf/test.json", JSON.stringify(pdfData, null, 2));
+});
 
 //ERROR HANDLING
 if(args.length != 6 || errors.checkData(args) != 200){
@@ -53,6 +57,7 @@ function generated(problem_sets, years){
 		response.pipe(file);
 		response.on("end", () => {
 			console.log("Done");
+			pdfParser.loadPDF("./pdf/test.pdf");
 		})
      });
 }

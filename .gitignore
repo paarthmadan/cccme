@@ -60,3 +60,5 @@ typings/
 # test directory
 pdf/
 
+# testing for local API (scraping experiments)
+test_function.js

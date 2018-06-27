@@ -1,13 +1,13 @@
 const errors = require('./errors.js');
 const request = require('request');
-const http = require('http');
+const https = require('https');
 const bl = require('bl');
 let fs = require('fs');
 let PDFParser = require('pdf2json');
 
 
 const args = process.argv;
-const base_url = "http://www.cemc.uwaterloo.ca/contests/computing/2015/stage%201/juniorEn.pdf";
+const base_url = "https://www.cemc.uwaterloo.ca/contests/computing/";
 var size = 5;
 let pdfParser = new PDFParser();
 
@@ -28,6 +28,19 @@ args[3] = args[3].toUpperCase();
 args[4] = parseInt(args[4]);
 args[5] = parseInt(args[5]);
 
+var pdfCount = 0;
+
+function fetchPDF (url){
+	pdfCount++;
+	var file = fs.createWriteStream("./pdf/test" + pdfCount + ".pdf");
+	https.get(url, function (response) {
+		response.pipe(file);
+		response.on("end", () => {
+			console.log("Done");
+			//PARSE
+		})
+     });
+}
 
 function randomizeProblems (args, callback){ 
 	var problem_sets = [];
@@ -52,14 +65,15 @@ function randomizeProblems (args, callback){
 function generated(problem_sets, years){
 	console.log(problem_sets);
 	console.log(years);
-	var file = fs.createWriteStream("./pdf/test.pdf");
-	http.get(base_url, function (response) {
-		response.pipe(file);
-		response.on("end", () => {
-			console.log("Done");
-			pdfParser.loadPDF("./pdf/test.pdf");
-		})
-     });
+
+	for(var i = 0; i < years.length; i++){
+		var currentYear = years[i];
+		var currentProblem = problem_sets[i];
+		var stage = (currentYear >= 2014 ? "stage 1" : "stage1");
+		var level = (currentProblem >= 5 ? "senior" : "junior");
+		var format = (currentYear >= 2017 ? "EF" : "En");
+		fetchPDF(base_url + currentYear + "/" + stage + "/" + level + format + ".pdf");
+	}
 }
 
 randomizeProblems(args, generated);

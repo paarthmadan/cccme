@@ -2,19 +2,21 @@ const errors = require('./errors.js');
 const request = require('request');
 const https = require('https');
 const bl = require('bl');
+const path = require('path');
 let fs = require('fs');
 let PDFParser = require('pdf2json');
-
+let pdfreader = require('pdfreader');
 
 const args = process.argv;
 const base_url = "https://www.cemc.uwaterloo.ca/contests/computing/";
 var size = 5;
 let pdfParser = new PDFParser();
 
-pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
-pdfParser.on("pdfParser_dataReady", pdfData => {
-    fs.writeFile("./pdf/test.json", JSON.stringify(pdfData, null, 2));
-});
+
+// pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
+// pdfParser.on("pdfParser_dataReady", pdfData => {
+//     fs.writeFile("./pdf/test.json", JSON.stringify(pdfData, null, 2));
+// });
 
 //ERROR HANDLING
 if(args.length != 6 || errors.checkData(args) != 200){
@@ -29,15 +31,75 @@ args[4] = parseInt(args[4]);
 args[5] = parseInt(args[5]);
 
 var pdfCount = 0;
+var parseCount = 0;
+
+var problemSet, yearsSet;
+
+var rows = {}; // indexed by y-position
+ 
+function checkForProblem(index) {
+	var returnValue = false;	
+  Object.keys(rows) // => array of y-positions (type: float)
+    .sort((y1, y2) => parseFloat(y1) - parseFloat(y2)) // sort float positions
+    .forEach((y) => {
+    	var character = ((index > 5) ? "S" : "J");
+    	var number = ((index > 5) ? (index - 5) : index);
+    	if((rows[y] || []).join('').indexOf("Problem" + character + number + ":") > -1){
+    		console.log((rows[y] || []).join(''));
+    		returnValue = true;
+    	}
+    });
+    return returnValue;
+}
+
+function createPDFReader(index, file){
+	// console.log(problemSet[index - 1]);
+	new pdfreader.PdfReader().parseFileItems("./pdf/" + file, function(err, item){
+	  if (!item || item.page) {
+	    if(checkForProblem(problemSet[index - 1])){
+	    	console.log('START PAGE:', item.page - 1);
+	    }
+	    if(checkForProblem(problemSet[index - 1] + 1)){
+	    	console.log('END PAGE:', item.page - 1);
+	    }
+	    rows = {};
+	  }
+	  else if (item.text) {
+	    (rows[item.y] = rows[item.y] || []).push(item.text);
+	  }
+	});	
+}
+
+
+function findRangesForPDF(){
+	fs.readdir("./pdf", function(err, files){
+		files.forEach(function(file, index){
+			if(path.extname(file) == ".pdf"){
+				var currentPage;
+				// console.log(index);
+				createPDFReader(index, file);
+			}
+		});
+	});
+}
 
 function fetchPDF (url){
+	var localCount = pdfCount + 1;
 	pdfCount++;
-	var file = fs.createWriteStream("./pdf/test" + pdfCount + ".pdf");
+
+	var file = fs.createWriteStream("./pdf/test" + localCount + ".pdf");
+	console.log(url);
 	https.get(url, function (response) {
+		response.on("error", () =>{
+			console.log("Error");
+		})
 		response.pipe(file);
 		response.on("end", () => {
-			console.log("Done");
-			//PARSE
+			pdfCount--;
+			if(pdfCount == 0){
+				console.log("Fetched All Files");
+				findRangesForPDF();
+			}		
 		})
      });
 }
@@ -66,11 +128,14 @@ function generated(problem_sets, years){
 	console.log(problem_sets);
 	console.log(years);
 
+	problemSet = problem_sets;
+	yearsSet = years;
+
 	for(var i = 0; i < years.length; i++){
 		var currentYear = years[i];
 		var currentProblem = problem_sets[i];
 		var stage = (currentYear >= 2014 ? "stage 1" : "stage1");
-		var level = (currentProblem >= 5 ? "senior" : "junior");
+		var level = (currentProblem > 5 ? "senior" : "junior");
 		var format = (currentYear >= 2017 ? "EF" : "En");
 		fetchPDF(base_url + currentYear + "/" + stage + "/" + level + format + ".pdf");
 	}

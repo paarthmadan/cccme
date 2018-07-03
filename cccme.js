@@ -34,9 +34,17 @@ var pdfCount = 0;
 var parseCount = 0;
 
 var problemSet, yearsSet;
+var rangeSet = [];
 
 var rows = {}; // indexed by y-position
  
+function printRanges(){
+	console.log(problemSet);
+	console.log(yearsSet);
+	console.log(rangeSet);
+}
+
+
 function checkForProblem(index) {
 	var returnValue = false;	
   Object.keys(rows) // => array of y-positions (type: float)
@@ -44,7 +52,7 @@ function checkForProblem(index) {
     .forEach((y) => {
     	var character = ((index > 5) ? "S" : "J");
     	var number = ((index > 5) ? (index - 5) : index);
-    	if((rows[y] || []).join('').indexOf("Problem" + character + number + ":") > -1){
+    	if((rows[y] || []).join('').indexOf("Problem" + character + number) > -1){
     		console.log((rows[y] || []).join(''));
     		returnValue = true;
     	}
@@ -53,18 +61,34 @@ function checkForProblem(index) {
 }
 
 function createPDFReader(index, file){
+	parseCount++;
+	var startPage, endPage;
 	// console.log(problemSet[index - 1]);
 	new pdfreader.PdfReader().parseFileItems("./pdf/" + file, function(err, item){
-	  if (!item || item.page) {
+	  if(!item){
+	  	if(!endPage){
+	  		endPage = -1;
+	  	}
+	  	rangeSet[index - 1] = [startPage, endPage];
+	  	parseCount--;
+	  	console.log(parseCount);
+	  	if(parseCount == 0){
+	  		printRanges();
+	  	}
+	  	rows = {};
+	  }else if (item.page) {
+	  	//scapes starting page
 	    if(checkForProblem(problemSet[index - 1])){
-	    	console.log('START PAGE:', item.page - 1);
+	    	// console.log('START PAGE:', item.page - 1);
+	    	startPage = item.page - 1;
 	    }
+	    //scrapes ending page
 	    if(checkForProblem(problemSet[index - 1] + 1)){
-	    	console.log('END PAGE:', item.page - 1);
+	    	// console.log('END PAGE:', item.page - 1);
+	    	endPage = item.page - 1;
 	    }
 	    rows = {};
-	  }
-	  else if (item.text) {
+	  }else if (item.text) {
 	    (rows[item.y] = rows[item.y] || []).push(item.text);
 	  }
 	});	
@@ -88,7 +112,7 @@ function fetchPDF (url){
 	pdfCount++;
 
 	var file = fs.createWriteStream("./pdf/test" + localCount + ".pdf");
-	console.log(url);
+	// console.log(url);
 	https.get(url, function (response) {
 		response.on("error", () =>{
 			console.log("Error");
@@ -97,7 +121,7 @@ function fetchPDF (url){
 		response.on("end", () => {
 			pdfCount--;
 			if(pdfCount == 0){
-				console.log("Fetched All Files");
+				// console.log("Fetched All Files");
 				findRangesForPDF();
 			}		
 		})
@@ -125,8 +149,8 @@ function randomizeProblems (args, callback){
 }
 
 function generated(problem_sets, years){
-	console.log(problem_sets);
-	console.log(years);
+	// console.log(problem_sets);
+	// console.log(years);
 
 	problemSet = problem_sets;
 	yearsSet = years;

@@ -21,8 +21,9 @@
   },
   "homepage": "https://github.com/paarthmadan/cccme#readme",
   "dependencies": {
+    "bl": "^2.1.1",
     "pdf2json": "^1.1.7",
     "pdfreader": "^0.2.5",
-    "request": "^2.83.0"
+    "request": "^2.88.0"
   }
 }
